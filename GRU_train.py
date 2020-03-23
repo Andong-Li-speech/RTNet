@@ -1,7 +1,6 @@
 from RTNet_GRU import *
 import argparse
 from train import *
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 parser = argparse.ArgumentParser(
     "Speech Enhancement using Recursive learning in the time domain, GRU mechanism is utilized"
