@@ -1,3 +1,10 @@
+"""
+This script includes AudioDataSet and AudioDataLoader, where AudioDataSet is a class to return miniatch list and
+AudioDataLoader is to load the minibatch data from the list returned by AudioDataSet
+This code is based on the code written by Kaituo Xu
+Date: 2019/06
+Author:Andong Li
+"""
 
 import json
 import os
@@ -142,7 +149,6 @@ class TestDataset(Dataset):
         return self.feat_minibatch[index], self.label_minibatch[index]
 
 
-
 class TrainDataLoader(object):
     def __init__(self, data_set, batch_size, num_workers = 0):
 
@@ -168,23 +174,28 @@ def generate_feats_labels(batch):
     for id in range(len(feat_batch)):
         feat_wav, _= sf.read(feat_batch[id])
         label_wav, _ = sf.read(label_batch[id])
+        ones = np.ones(feat_wav.shape).astype(np.int)
 
         if len(feat_wav) > nsamples:
             wav_start = random.randint(0, len(feat_wav)- nsamples)
             feat_wav = feat_wav[wav_start:wav_start+nsamples]
             label_wav = label_wav[wav_start:wav_start+nsamples]
+            ones = ones[wav_start:wav_start+nframes]
         else:
             feat_wav = np.concatenate((feat_wav, np.zeros(nsamples - len(feat_wav))))
+            ones = np.concatenate((ones, np.zeros(nframes - len(label_wav))))
             label_wav = np.concatenate((label_wav, np.zeros(nsamples - len(label_wav))))
 
         feat_x = signal_to_frame(feat_wav)
         label_x = signal_to_frame(label_wav)
+        ones_x = signal_to_frame(ones)
         feat_list.append(feat_x)
         label_list.append(label_x)
-        frame_list.append(feat_x.shape[0])
+        frame_list.append(ones_x)
     feat_list = to_tensor(np.concatenate(feat_list, axis= 0), 'float')
     label_list = to_tensor(np.concatenate(label_list, axis = 0), 'float')
-    return feat_list.cuda(), label_list.cuda(), frame_list
+    frame_list = to_tensor(np.concatenate(frame_list, axis = 0), 'float').requires_grad_(False)
+    return feat_list.cuda(), label_list.cuda(), frame_list.cuda()
 
 class CvDataLoader(object):
     def __init__(self, data_set, batch_size, num_workers = 0):

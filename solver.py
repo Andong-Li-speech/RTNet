@@ -138,7 +138,7 @@ class Solver(object):
             batch_label = batch_info.labels
             batch_frame_list = batch_info.frame_list
             esti, _  = self.model(batch_feat)
-            batch_loss = mae_loss(esti, batch_label)
+            batch_loss = mae_loss(esti, batch_label, batch_frame_list)
             tr_batch.append(batch_loss.item())
 
             if not cross_valid:

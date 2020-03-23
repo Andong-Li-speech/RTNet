@@ -1,4 +1,8 @@
-
+"""
+This script is the backup function used to support backup support for the SE system
+Author: Andong Li
+Time: 2019/06
+"""
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -143,7 +147,7 @@ def recover_audio(batch_info, model, args):
     :return:
     """
     _, esti_list = model(batch_info.feats)
-    esti = esti_list[-1].squeeze().cpu().numpy()
+    esti = esti_list[-3].squeeze().cpu().numpy()
     mix = batch_info.feats.cpu().numpy()
     speech_list = batch_info.labels
     frame_list = batch_info.frame_list
@@ -172,9 +176,9 @@ def recover_audio(batch_info, model, args):
         mix_utt = deframesig(de_mix, siglen= 0, frame_len= win_size, frame_step = win_shift).astype(np.float32)
         esti_utt = deframesig(de_esti, siglen= 0, frame_len= win_size, frame_step = win_shift).astype(np.float32)
         clean_utt = deframesig(de_speech, siglen= 0, frame_len= win_size, frame_step= win_shift).astype(np.float32)
-        mix_utt = ola(de_mix, win_size= win_size, win_shift= win_shift)
+        #mix_utt = ola(de_mix, win_size= win_size, win_shift= win_shift)
         esti_utt = ola(de_esti, win_size=win_size, win_shift=win_shift)
-        clean_utt = ola(de_speech, win_size=win_size, win_shift=win_shift)
+        #clean_utt = ola(de_speech, win_size=win_size, win_shift=win_shift)
 
         filename= os.path.split(info_list[i])[1]
         os.makedirs(os.path.join(esti_write_dir), exist_ok=True)
@@ -182,17 +186,36 @@ def recover_audio(batch_info, model, args):
         os.makedirs(os.path.join(clean_write_dir), exist_ok=True)
         librosa.output.write_wav(os.path.join(esti_write_dir, '%s_enhanced.wav' % filename),
                                  esti_utt, args.fs)
-        librosa.output.write_wav(os.path.join(clean_write_dir, '%s_clean.wav' % filename), clean_utt,
-                                 args.fs)
-        librosa.output.write_wav(os.path.join(mix_write_dir, '%s_mix.wav' % filename), mix_utt,
-                                 args.fs)
+        # librosa.output.write_wav(os.path.join(clean_write_dir, '%s_clean.wav' % filename), clean_utt,
+        #                          args.fs)
+        # librosa.output.write_wav(os.path.join(mix_write_dir, '%s_mix.wav' % filename), mix_utt,
+        #                          args.fs)
 
 
 
-def mae_loss(esti, label):
+
+def mae_loss(esti, label, frames):
+
     esti  = torch.squeeze(esti)
+    esti = esti * frames
+    label = label * frames
     loss = torch.abs(torch.squeeze(esti - label)).mean()
     return loss
+
+
+def sdr_loss(esti, label, granularity):
+    esti = torch.squeeze(esti)
+    block = np.int(np.ceil(esti.size(1) / granularity))
+    cnt = 0
+    sdr_lo = torch.zeros((esti.size(0))).cuda()
+    c1 = 10
+    for i in range(block):
+        es = esti[:, cnt: np.min((cnt + granularity, esti.size(1)))]
+        la = label[:, cnt: np.min((cnt + granularity, esti.size(1)))]
+        sdr_lo = sdr_lo + c1 * (1 - F.cosine_similarity(es, la, dim = 1)) / 2
+        cnt = cnt + granularity
+    return (sdr_lo / block).mean() + EPSILON
+
 
 
 
