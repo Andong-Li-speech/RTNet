@@ -180,10 +180,10 @@ def generate_feats_labels(batch):
             wav_start = random.randint(0, len(feat_wav)- nsamples)
             feat_wav = feat_wav[wav_start:wav_start+nsamples]
             label_wav = label_wav[wav_start:wav_start+nsamples]
-            ones = ones[wav_start:wav_start+nframes]
+            ones = ones[wav_start:wav_start+nsamples]
         else:
             feat_wav = np.concatenate((feat_wav, np.zeros(nsamples - len(feat_wav))))
-            ones = np.concatenate((ones, np.zeros(nframes - len(label_wav))))
+            ones = np.concatenate((ones, np.zeros(nsamples - len(label_wav))))
             label_wav = np.concatenate((label_wav, np.zeros(nsamples - len(label_wav))))
 
         feat_x = signal_to_frame(feat_wav)
