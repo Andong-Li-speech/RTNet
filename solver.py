@@ -134,34 +134,47 @@ class Solver(object):
         total_loss = 0
         data_loader = self.tr_loader if not cross_valid else self.cv_loader
         for batch_id, batch_info  in enumerate(data_loader.get_data_loader()):
-            batch_feat = batch_info.feats
-            batch_label = batch_info.labels
-            batch_frame_list = batch_info.frame_list
-            esti, _  = self.model(batch_feat)
-            batch_loss = mae_loss(esti, batch_label, batch_frame_list)
-            tr_batch.append(batch_loss.item())
+            with set_default_tensor_type(torch.cuda.FloatTensor):
+                batch_feat = batch_info.feats.cuda()
+                esti, _  = self.model(batch_feat)
+                del batch_feat
+                batch_label = batch_info.labels.cuda()
+                batch_frame_list = batch_info.frame_list.cuda()
+                batch_loss = mae_loss(esti, batch_label, batch_frame_list)
+                del batch_label, batch_frame_list
+                batch_loss_res = batch_loss.item()
+                tr_batch.append(batch_loss_res)
 
-            if not cross_valid:
-                self.optimizer.zero_grad()
-                batch_loss.backward()
-                self.optimizer.step()
-            total_loss += batch_loss.item()
+                if not cross_valid:
+                    self.optimizer.zero_grad()
+                    batch_loss.backward()
+                    self.optimizer.step()
+                total_loss += batch_loss_res
 
-            if batch_id % self.print_freq == 0:
-                print("Epoch:%d, Iter:%d, Average_loss:%5f,Current_loss:%5f, %d ms/batch."
-                      % (int(epoch+1), int(batch_id), total_loss/ (batch_id+1), batch_loss.item(),
-                         1000 * (time.time()- start1) / (batch_id +1)) )
+                if batch_id % self.print_freq == 0:
+                    print("Epoch:%d, Iter:%d, Average_loss:%5f,Current_loss:%5f, %d ms/batch."
+                        % (int(epoch+1), int(batch_id), total_loss/ (batch_id+1), batch_loss_res,
+                            1000 * (time.time()- start1) / (batch_id +1)) )
 
         return total_loss / (batch_id +1)
 
 
 
 
+from contextlib import contextmanager
 
 
 
-
-
+@contextmanager
+def set_default_tensor_type(tensor_type):
+    if torch.tensor(0).is_cuda:
+        old_tensor_type = torch.cuda.FloatTensor
+    else:
+        old_tensor_type = torch.FloatTensor
+        
+    torch.set_default_tensor_type(tensor_type)
+    yield
+    torch.set_default_tensor_type(old_tensor_type)
 
 
 

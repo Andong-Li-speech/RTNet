@@ -150,13 +150,12 @@ class TestDataset(Dataset):
 
 
 class TrainDataLoader(object):
-    def __init__(self, data_set, batch_size, num_workers = 0):
+    def __init__(self, data_set, **kw):
 
         self.data_loader = DataLoader(dataset= data_set,
-                                           batch_size = batch_size,
                                            shuffle = 1,
-                                           num_workers= num_workers,
-                                           collate_fn= self.collate_fn)
+                                           collate_fn= self.collate_fn,
+                                           **kw)
 
     @staticmethod
     def collate_fn(batch):
@@ -180,10 +179,10 @@ def generate_feats_labels(batch):
             wav_start = random.randint(0, len(feat_wav)- nsamples)
             feat_wav = feat_wav[wav_start:wav_start+nsamples]
             label_wav = label_wav[wav_start:wav_start+nsamples]
-            ones = ones[wav_start:wav_start+nframes]
+            ones = ones[wav_start:wav_start+nsamples]
         else:
             feat_wav = np.concatenate((feat_wav, np.zeros(nsamples - len(feat_wav))))
-            ones = np.concatenate((ones, np.zeros(nframes - len(label_wav))))
+            ones = np.concatenate((ones, np.zeros(nsamples - len(label_wav))))
             label_wav = np.concatenate((label_wav, np.zeros(nsamples - len(label_wav))))
 
         feat_x = signal_to_frame(feat_wav)
@@ -195,16 +194,15 @@ def generate_feats_labels(batch):
     feat_list = to_tensor(np.concatenate(feat_list, axis= 0), 'float')
     label_list = to_tensor(np.concatenate(label_list, axis = 0), 'float')
     frame_list = to_tensor(np.concatenate(frame_list, axis = 0), 'float').requires_grad_(False)
-    return feat_list.cuda(), label_list.cuda(), frame_list.cuda()
+    return feat_list, label_list, frame_list
 
 class CvDataLoader(object):
-    def __init__(self, data_set, batch_size, num_workers = 0):
+    def __init__(self, data_set, **kw):
 
         self.data_loader = DataLoader(dataset= data_set,
-                                           batch_size = batch_size,
                                            shuffle = 1,
-                                           num_workers= num_workers,
-                                           collate_fn= self.collate_fn)
+                                           collate_fn= self.collate_fn,
+                                           **kw)
 
     @staticmethod
     def collate_fn(batch):
@@ -222,13 +220,12 @@ class BatchInfo(object):
         self.frame_list = frame_list
 
 class TestDataLoader(object):
-    def __init__(self, data_set, batch_size, num_workers = 0):
+    def __init__(self, data_set, **kw):
 
         self.data_loader = DataLoader(dataset= data_set,
-                                           batch_size = batch_size,
                                            shuffle = 1,
-                                           num_workers= num_workers,
-                                           collate_fn= self.collate_fn)
+                                           collate_fn= self.collate_fn,
+                                           **kw)
 
     @staticmethod
     def collate_fn(batch):
@@ -254,7 +251,7 @@ def test_generate_feats_labels(batch):
         frame_list.append(feat_x.shape[0])
         info_list.append(os.path.splitext(os.path.split(file_path)[1])[0])
     feat_list = to_tensor(np.concatenate(feat_list, axis= 0), 'float')
-    return feat_list.cuda(), label_list, frame_list, info_list
+    return feat_list, label_list, frame_list, info_list
 
 class Test_BatchInfo(object):
     def __init__(self, feats, labels, frame_list, info_list):
