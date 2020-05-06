@@ -46,7 +46,7 @@ class Solver(object):
             # package is the loading model
             package = torch.load(self.continue_from)
             # module is the base class
-            self.model.module.load_state_dict(package['state_dict'])
+            self.model.load_state_dict(package['state_dict'])
             self.optimizer.load_state_dict(package['optim_dict'])
             self.start_epoch = int(package.get('epoch', 1))
             self.tr_loss[self.start_epoch] = package['tr_loss'][:self.start_epoch]
