@@ -130,18 +130,13 @@ class Solver(object):
                 print("Find better cv model, saving to %s" % os.path.split(self.best_path)[1])
 
     def _run_one_epoch(self, epoch, cross_valid = False):
-        start1 = time.time()
-        total_loss = 0
-        data_loader = self.tr_loader if not cross_valid else self.cv_loader
-        for batch_id, batch_info  in enumerate(data_loader.get_data_loader()):
+        def _batch(batch_id, batch_info):
             with set_default_tensor_type(torch.cuda.FloatTensor):
                 batch_feat = batch_info.feats.cuda()
                 esti, _  = self.model(batch_feat)
-                del batch_feat
                 batch_label = batch_info.labels.cuda()
                 batch_frame_list = batch_info.frame_list.cuda()
                 batch_loss = mae_loss(esti, batch_label, batch_frame_list)
-                del batch_label, batch_frame_list
                 batch_loss_res = batch_loss.item()
                 tr_batch.append(batch_loss_res)
 
@@ -149,13 +144,19 @@ class Solver(object):
                     self.optimizer.zero_grad()
                     batch_loss.backward()
                     self.optimizer.step()
-                total_loss += batch_loss_res
 
                 if batch_id % self.print_freq == 0:
                     print("Epoch:%d, Iter:%d, Average_loss:%5f,Current_loss:%5f, %d ms/batch."
                         % (int(epoch+1), int(batch_id), total_loss/ (batch_id+1), batch_loss_res,
                             1000 * (time.time()- start1) / (batch_id +1)) )
+            return batch_loss_res
 
+        start1 = time.time()
+        total_loss = 0
+        data_loader = self.tr_loader if not cross_valid else self.cv_loader
+        for batch_id, batch_info in enumerate(data_loader.get_data_loader()):
+            total_loss += _batch(batch_id, batch_info)
+            gc.collect()
         return total_loss / (batch_id +1)
 
 
