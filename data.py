@@ -176,7 +176,7 @@ def generate_feats_labels(batch):
         ones = np.ones(feat_wav.shape).astype(np.int)
 
         if len(feat_wav) > nsamples:
-            wav_start = random.randint(0, len(feat_wav)- nsamples)
+            wav_start = random.randint(skip_samples, len(feat_wav)- nsamples)
             feat_wav = feat_wav[wav_start:wav_start+nsamples]
             label_wav = label_wav[wav_start:wav_start+nsamples]
             ones = ones[wav_start:wav_start+nsamples]
