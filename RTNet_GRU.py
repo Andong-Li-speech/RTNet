@@ -32,13 +32,13 @@ class RTNet_GRU(nn.Module):
         mixture = mixture.unsqueeze(dim= 1)
         x = mixture
         batch_size, feat_dim = mixture.size(0), mixture.size(2)
-        h = Variable(torch.zeros(batch_size, 16, 1024)).to(x.device)
+        h = torch.zeros(batch_size, 16, 1024)
         x_list = []
         for i in range(self.Iter):
             x = torch.cat((mixture, x), dim= 1)
             h = self.gru(x, h)
             x, en_list = self.en(h)
-            skip = Variable(torch.zeros(x.shape), requires_grad = True).cuda()
+            skip = torch.zeros(x.shape, requires_grad=True)
             for id in range(6):
                 x = self.glu_list[id](x)
                 skip = skip + x

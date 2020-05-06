@@ -14,16 +14,20 @@ np.random.seed(0)
 
 
 def main(args, model):
+    torch.backends.cudnn.benchmark = True
+
     tr_dataset = TrainDataset(json_dir= args.json_dir,
                                   batch_size = args.batch_size)
     cv_data_set = CvDataset(json_dir= args.json_dir,
                                batch_size= args.batch_size)
     tr_loader = TrainDataLoader(data_set= tr_dataset,
                                         batch_size = 1,
-                                        num_workers= args.num_workers)
+                                        num_workers= args.num_workers,
+                                        pin_memory=True)
     cv_loader = CvDataLoader(data_set= cv_data_set,
                                         batch_size = 1,
-                                        num_workers=args.num_workers)
+                                        num_workers=args.num_workers,
+                                        pin_memory=True)
     data= {'tr_loader': tr_loader, 'cv_loader': cv_loader}
 
     print(model)
