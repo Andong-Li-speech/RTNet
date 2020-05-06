@@ -14,6 +14,7 @@ from Backup import *
 import numpy as np
 #from pystoi.stoi import stoi
 import hdf5storage
+import gc
 
 tr_batch, tr_epoch,cv_epoch = [], [], []
 
