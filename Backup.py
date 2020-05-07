@@ -15,7 +15,7 @@ import h5py
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-from pystoi.stoi import stoi
+#from pystoi.stoi import stoi
 from python_speech_features.sigproc import framesig, deframesig
 import sys
 from functools import reduce
