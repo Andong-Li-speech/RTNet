@@ -1,4 +1,4 @@
 # RTNet
 Implementation of "Monaural Speech Enhancement with Recursive Learning in the Time Domain". 
 
-Under construction and will update in the near future!
+The project is still under construction and I will update when I finish my work.
